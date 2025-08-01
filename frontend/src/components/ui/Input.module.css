@@ -1,0 +1,174 @@
+.input {
+  width: 100%;
+  padding: 0.75rem;
+  border: 2px solid #e2e8f0;
+  border-radius: 0.5rem;
+  font-size: 0.875rem;
+  font-family: inherit;
+  background: white;
+  color: #374151;
+  transition: all 0.2s ease;
+  box-sizing: border-box;
+}
+
+.input:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  background: white;
+}
+
+.input:hover:not(:focus) {
+  border-color: #cbd5e1;
+}
+
+.input:disabled {
+  background: #f8fafc;
+  color: #9ca3af;
+  cursor: not-allowed;
+  border-color: #e2e8f0;
+}
+
+.input::placeholder {
+  color: #9ca3af;
+}
+
+/* Input sizes */
+.small {
+  padding: 0.5rem;
+  font-size: 0.75rem;
+}
+
+.large {
+  padding: 1rem;
+  font-size: 1rem;
+}
+
+/* Input variants */
+.outline {
+  background: transparent;
+  border-color: #d1d5db;
+}
+
+.outline:focus {
+  background: white;
+}
+
+.filled {
+  background: #f8fafc;
+  border-color: transparent;
+}
+
+.filled:focus {
+  background: white;
+  border-color: #3b82f6;
+}
+
+/* Error state */
+.error {
+  border-color: #ef4444;
+  background: #fef2f2;
+}
+
+.error:focus {
+  border-color: #ef4444;
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
+}
+
+/* Success state */
+.success {
+  border-color: #10b981;
+  background: #f0fdf4;
+}
+
+.success:focus {
+  border-color: #10b981;
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+}
+
+/* Input group */
+.inputGroup {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.inputGroup .input {
+  border-radius: 0;
+}
+
+.inputGroup .input:first-child {
+  border-top-left-radius: 0.5rem;
+  border-bottom-left-radius: 0.5rem;
+}
+
+.inputGroup .input:last-child {
+  border-top-right-radius: 0.5rem;
+  border-bottom-right-radius: 0.5rem;
+}
+
+.inputGroup .input:not(:first-child):not(:last-child) {
+  border-left: none;
+  border-right: none;
+}
+
+.inputGroup .input:not(:last-child) {
+  border-right: none;
+}
+
+.inputGroup .input:not(:first-child) {
+  border-left: none;
+}
+
+/* Input with icon */
+.inputWithIcon {
+  position: relative;
+}
+
+.inputWithIcon .input {
+  padding-left: 2.5rem;
+}
+
+.inputIcon {
+  position: absolute;
+  left: 0.75rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #9ca3af;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.inputWithIcon .input:focus + .inputIcon {
+  color: #3b82f6;
+}
+
+/* Label */
+.label {
+  display: block;
+  font-weight: 500;
+  margin-bottom: 0.5rem;
+  color: #374151;
+  font-size: 0.875rem;
+}
+
+/* Helper text */
+.helperText {
+  margin-top: 0.25rem;
+  font-size: 0.75rem;
+  color: #6b7280;
+}
+
+.helperText.error {
+  color: #ef4444;
+}
+
+.helperText.success {
+  color: #10b981;
+}
+
+/* Required indicator */
+.required {
+  color: #ef4444;
+  margin-left: 0.25rem;
+} 

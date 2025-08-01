@@ -30,6 +30,22 @@ def update_progress(job_id, step, percent):
     progress_map[job_id] = {"step": step, "percent": percent}
 
 
+def cleanup_output_directory():
+    """Clean up the output directory by removing old session directories"""
+    try:
+        # Remove directories older than 1 hour to prevent accumulation
+        import time
+        current_time = time.time()
+        for item in os.listdir(OUTPUT_BASE):
+            item_path = os.path.join(OUTPUT_BASE, item)
+            if os.path.isdir(item_path):
+                # Check if directory is older than 1 hour
+                if current_time - os.path.getctime(item_path) > 3600:  # 1 hour
+                    shutil.rmtree(item_path, ignore_errors=True)
+    except Exception as e:
+        print(f"Error cleaning up output directory: {e}")
+
+
 def delete_rows_and_columns(ws, ranges, cols_to_delete):
     original_merges = list(ws.merged_cells.ranges)
     merge_text_map = {}
@@ -187,6 +203,9 @@ async def process_excel(
     config: str = Form(...),  # Full JSON config for sheets/assets/columns
     background_tasks: BackgroundTasks = None
 ):
+    # Clean up old output directories before processing
+    cleanup_output_directory()
+    
     job_id = str(uuid4())
     update_progress(job_id, "File upload", 0)
 

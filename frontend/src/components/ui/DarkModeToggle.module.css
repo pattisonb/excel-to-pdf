@@ -1,0 +1,90 @@
+.toggleContainer {
+  position: fixed;
+  top: 1rem;
+  right: 1rem;
+  z-index: 1000;
+}
+
+.toggle {
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid #e2e8f0;
+  border-radius: 50%;
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  backdrop-filter: blur(10px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.toggle:hover {
+  background: rgba(255, 255, 255, 1);
+  border-color: #3b82f6;
+  transform: scale(1.05);
+  box-shadow: 0 6px 16px rgba(59, 130, 246, 0.2);
+}
+
+.toggle:active {
+  transform: scale(0.95);
+}
+
+.icon {
+  font-size: 1.25rem;
+  transition: all 0.3s ease;
+}
+
+.sunIcon {
+  color: #f59e0b;
+}
+
+.moonIcon {
+  color: #6366f1;
+}
+
+/* Dark mode styles */
+.toggle.dark {
+  background: rgba(30, 41, 59, 0.9);
+  border-color: #475569;
+}
+
+.toggle.dark:hover {
+  background: rgba(30, 41, 59, 1);
+  border-color: #60a5fa;
+  box-shadow: 0 6px 16px rgba(96, 165, 250, 0.2);
+}
+
+/* Animation for icon transition */
+.icon {
+  animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: rotate(-90deg) scale(0.8);
+  }
+  to {
+    opacity: 1;
+    transform: rotate(0deg) scale(1);
+  }
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .toggleContainer {
+    top: 0.75rem;
+    right: 0.75rem;
+  }
+  
+  .toggle {
+    width: 40px;
+    height: 40px;
+  }
+  
+  .icon {
+    font-size: 1rem;
+  }
+} 

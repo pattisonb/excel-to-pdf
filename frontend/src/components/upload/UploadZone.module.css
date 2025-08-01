@@ -1,0 +1,391 @@
+.container {
+  padding: 2rem;
+}
+
+/* Step 1: Upload Zone */
+.uploadZone {
+  border: 3px dashed #d1d5db;
+  border-radius: 1rem;
+  padding: 3rem 2rem;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+  position: relative;
+  overflow: hidden;
+}
+
+.uploadZone:hover {
+  border-color: #3b82f6;
+  background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 10px 25px -5px rgba(59, 130, 246, 0.1);
+}
+
+.uploadZone:active {
+  transform: translateY(0);
+}
+
+.uploadText {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #374151;
+  margin-bottom: 0.5rem;
+}
+
+.uploadSubtext {
+  font-size: 0.875rem;
+  color: #6b7280;
+}
+
+/* Step 2: Sheet Selection */
+.sheetSelection {
+  padding: 1.5rem;
+}
+
+.sheetTitle {
+  font-size: 1.25rem;
+  font-weight: 700;
+  margin-bottom: 1rem;
+  color: #1f2937;
+}
+
+.sheetList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+}
+
+.sheetItem {
+  display: flex;
+  align-items: center;
+  padding: 0.75rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.5rem;
+  transition: all 0.2s ease;
+  background: white;
+}
+
+.sheetItem:hover {
+  border-color: #3b82f6;
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.1);
+}
+
+.sheetCheckbox {
+  margin-right: 0.75rem;
+  width: 1.25rem;
+  height: 1.25rem;
+  accent-color: #3b82f6;
+}
+
+.sheetLabel {
+  font-weight: 500;
+  color: #374151;
+  cursor: pointer;
+  flex: 1;
+}
+
+.testDataToggle {
+  display: flex;
+  align-items: center;
+  padding: 1rem;
+  background: #fef3c7;
+  border: 1px solid #f59e0b;
+  border-radius: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.testDataCheckbox {
+  margin-right: 0.75rem;
+  width: 1.25rem;
+  height: 1.25rem;
+  accent-color: #f59e0b;
+}
+
+.testDataLabel {
+  font-weight: 500;
+  color: #92400e;
+  cursor: pointer;
+}
+
+/* Step 3: Configuration */
+.configuration {
+  padding: 1.5rem;
+}
+
+.configTitle {
+  font-size: 1.25rem;
+  font-weight: 700;
+  margin-bottom: 1.5rem;
+  color: #1f2937;
+}
+
+.sheetConfig {
+  border: 1px solid #e5e7eb;
+  border-radius: 0.75rem;
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+  background: white;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.sheetConfigTitle {
+  font-weight: 700;
+  margin-bottom: 1rem;
+  color: #1f2937;
+  font-size: 1.125rem;
+}
+
+.inputGroup {
+  margin-bottom: 1rem;
+}
+
+.inputLabel {
+  display: block;
+  font-weight: 500;
+  margin-bottom: 0.5rem;
+  color: #374151;
+}
+
+.inputField {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid #d1d5db;
+  border-radius: 0.5rem;
+  font-size: 0.875rem;
+  transition: border-color 0.2s ease;
+}
+
+.inputField:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.assetGroup {
+  margin-bottom: 1rem;
+  padding: 1rem;
+  background: #f9fafb;
+  border-radius: 0.5rem;
+  border: 1px solid #e5e7eb;
+}
+
+.assetTitle {
+  font-weight: 600;
+  margin-bottom: 0.75rem;
+  color: #374151;
+}
+
+.assetInputs {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+}
+
+.assetInput {
+  flex: 1;
+  padding: 0.5rem;
+  border: 1px solid #d1d5db;
+  border-radius: 0.375rem;
+  font-size: 0.875rem;
+}
+
+.assetInput:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
+}
+
+/* Buttons */
+.button {
+  padding: 0.75rem 1.5rem;
+  border: none;
+  border-radius: 0.5rem;
+  font-weight: 600;
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 120px;
+}
+
+.button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.buttonPrimary {
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  color: white;
+}
+
+.buttonPrimary:hover:not(:disabled) {
+  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+}
+
+.buttonSuccess {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: white;
+}
+
+.buttonSuccess:hover:not(:disabled) {
+  background: linear-gradient(135deg, #059669 0%, #047857 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+}
+
+/* Progress Bar */
+.progressContainer {
+  margin-top: 1.5rem;
+  padding: 1.5rem;
+  background: #f8fafc;
+  border-radius: 0.75rem;
+  border: 1px solid #e2e8f0;
+}
+
+.progressStatus {
+  text-align: center;
+  margin-bottom: 0.75rem;
+  font-weight: 500;
+  color: #374151;
+}
+
+.progressBar {
+  width: 100%;
+  height: 0.75rem;
+  background: #e2e8f0;
+  border-radius: 0.375rem;
+  overflow: hidden;
+  margin-bottom: 0.5rem;
+}
+
+.progressFill {
+  height: 100%;
+  background: linear-gradient(90deg, #3b82f6 0%, #1d4ed8 100%);
+  border-radius: 0.375rem;
+  transition: width 0.3s ease;
+}
+
+.progressText {
+  text-align: center;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #6b7280;
+}
+
+/* Dark mode styles */
+.dark .uploadZone {
+  border-color: #475569;
+  background: linear-gradient(135deg, #334155 0%, #475569 100%);
+}
+
+.dark .uploadZone:hover {
+  border-color: #60a5fa;
+  background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%);
+  box-shadow: 0 10px 25px -5px rgba(96, 165, 250, 0.2);
+}
+
+.dark .uploadText {
+  color: #e2e8f0;
+}
+
+.dark .uploadSubtext {
+  color: #94a3b8;
+}
+
+.dark .sheetTitle {
+  color: #e2e8f0;
+}
+
+.dark .sheetItem {
+  background: #1e293b;
+  border-color: #475569;
+}
+
+.dark .sheetItem:hover {
+  border-color: #60a5fa;
+  box-shadow: 0 2px 8px rgba(96, 165, 250, 0.2);
+}
+
+.dark .sheetLabel {
+  color: #e2e8f0;
+}
+
+.dark .testDataToggle {
+  background: #451a03;
+  border-color: #f59e0b;
+}
+
+.dark .testDataLabel {
+  color: #fbbf24;
+}
+
+.dark .configTitle {
+  color: #e2e8f0;
+}
+
+.dark .sheetConfig {
+  background: #1e293b;
+  border-color: #475569;
+}
+
+.dark .sheetConfigTitle {
+  color: #e2e8f0;
+}
+
+.dark .inputLabel {
+  color: #e2e8f0;
+}
+
+.dark .inputField {
+  background: #334155;
+  border-color: #475569;
+  color: #e2e8f0;
+}
+
+.dark .inputField:focus {
+  border-color: #60a5fa;
+  box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.1);
+}
+
+.dark .assetGroup {
+  background: #334155;
+  border-color: #475569;
+}
+
+.dark .assetTitle {
+  color: #e2e8f0;
+}
+
+.dark .assetInput {
+  background: #475569;
+  border-color: #64748b;
+  color: #e2e8f0;
+}
+
+.dark .assetInput:focus {
+  border-color: #60a5fa;
+  box-shadow: 0 0 0 2px rgba(96, 165, 250, 0.1);
+}
+
+.dark .progressContainer {
+  background: #334155;
+  border-color: #475569;
+}
+
+.dark .progressStatus {
+  color: #e2e8f0;
+}
+
+.dark .progressBar {
+  background: #475569;
+}
+
+.dark .progressText {
+  color: #94a3b8;
+} 

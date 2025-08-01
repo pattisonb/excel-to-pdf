@@ -1,6 +1,10 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import ImagePreview from "./ImagePreview";
+import Button from "../ui/Button";
+import Input from "../ui/Input";
+import { useDarkMode } from "@/contexts/DarkModeContext";
+import styles from "./UploadZone.module.css";
 
 interface SheetInfo {
   index: number;
@@ -16,7 +20,7 @@ interface SheetConfig {
 }
 
 const hardcodedRanges = [
-  { sheet: 1, ranges: [[3, 6], [7, 42], [44, 58], [60, 69], [71, 79], [81, 86], [88, 94], [96, 103], [105, 122], [123, 128]] },
+  { sheet: 1, ranges: [[1, 6], [7, 42], [44, 58], [60, 69], [71, 79], [81, 86], [88, 94], [96, 103], [105, 122], [123, 128]] },
   { sheet: 2, ranges: [[6, 15], [17, 29], [31, 38]] },
 ];
 
@@ -32,6 +36,24 @@ export default function UploadZone() {
   // ✅ NEW: Track progress bar state
   const [progress, setProgress] = useState<number>(0);
   const [status, setStatus] = useState<string>("");
+
+  // File input ref for click to browse functionality
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Dark mode context
+  const { isDark } = useDarkMode();
+
+  const resetState = () => {
+    setStep(1);
+    setFile(null);
+    setSheets([]);
+    setSheetConfigs([]);
+    setImages([]);
+    setLoading(false);
+    setUseTestData(false);
+    setProgress(0);
+    setStatus("");
+  };
 
   const handleFileDrop = async (droppedFile: File) => {
     setFile(droppedFile);
@@ -51,6 +73,22 @@ export default function UploadZone() {
     setSheets(data.sheets);
     setLoading(false);
     setStep(2);
+  };
+
+  const handleFileSelect = (selectedFile: File) => {
+    handleFileDrop(selectedFile);
+  };
+
+  const handleUploadZoneClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleStartOver = async (newFile: File) => {
+    // Reset all state
+    resetState();
+    
+    // Process the new file
+    await handleFileDrop(newFile);
   };
 
   const toggleSheetSelection = (sheet: SheetInfo) => {
@@ -120,76 +158,91 @@ export default function UploadZone() {
   };
 
   return (
-    <div className="p-4">
+    <div className={`${styles.container} ${isDark ? 'dark' : ''}`}>
+      {/* Hidden file input for click to browse */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept=".xlsx,.xls"
+        onChange={(e) => {
+          const selectedFile = e.target.files?.[0];
+          if (selectedFile) {
+            handleFileSelect(selectedFile);
+          }
+        }}
+        style={{ display: "none" }}
+      />
+
       {/* STEP 1: Upload */}
       {step === 1 && (
         <div
-          style={{
-            border: "2px dashed #ccc",
-            padding: "20px",
-            textAlign: "center",
-            cursor: "pointer",
-          }}
+          className={styles.uploadZone}
           onDragOver={(e) => e.preventDefault()}
           onDrop={(e) => {
             e.preventDefault();
             const f = e.dataTransfer.files[0];
             if (f) handleFileDrop(f);
           }}
+          onClick={handleUploadZoneClick}
         >
-          Drag & Drop Excel File Here
+          <div className={styles.uploadText}>📄 Drag & Drop Excel File Here</div>
+          <div className={styles.uploadSubtext}>or click to browse files</div>
         </div>
       )}
 
       {/* STEP 2: Select Sheets */}
       {step === 2 && (
-        <div>
-          <h3 className="text-lg font-bold mb-2">Select Sheets:</h3>
-          {sheets.map((sheet) => (
-            <div key={sheet.index}>
-              <input
-                type="checkbox"
-                checked={sheetConfigs.some((s) => s.index === sheet.index)}
-                onChange={() => toggleSheetSelection(sheet)}
-                disabled={useTestData}
-              />
-              <label className="ml-2">{sheet.name}</label>
-            </div>
-          ))}
+        <div className={styles.sheetSelection}>
+          <h3 className={styles.sheetTitle}>Select Sheets:</h3>
+          <div className={styles.sheetList}>
+            {sheets.map((sheet) => (
+              <div key={sheet.index} className={styles.sheetItem}>
+                <input
+                  type="checkbox"
+                  className={styles.sheetCheckbox}
+                  checked={sheetConfigs.some((s) => s.index === sheet.index)}
+                  onChange={() => toggleSheetSelection(sheet)}
+                  disabled={useTestData}
+                />
+                <label className={styles.sheetLabel}>{sheet.name}</label>
+              </div>
+            ))}
+          </div>
 
-          <div className="mt-4">
+          <div className={styles.testDataToggle}>
             <input
               type="checkbox"
               id="testData"
+              className={styles.testDataCheckbox}
               checked={useTestData}
               onChange={() => setUseTestData(!useTestData)}
             />
-            <label htmlFor="testData" className="ml-2">
+            <label htmlFor="testData" className={styles.testDataLabel}>
               Use test data (bypass manual input)
             </label>
           </div>
 
-          <button
+          <Button
+            variant="primary"
             onClick={handleNext}
             disabled={!useTestData && sheetConfigs.length === 0}
-            className="mt-4 bg-blue-500 text-white px-4 py-2 rounded"
+            loading={loading}
           >
             Next
-          </button>
+          </Button>
         </div>
       )}
 
       {/* STEP 3: Configure */}
       {step === 3 && (
-        <div>
-          <h3 className="text-lg font-bold mb-4">Configure Each Sheet:</h3>
+        <div className={styles.configuration}>
+          <h3 className={styles.configTitle}>Configure Each Sheet:</h3>
           {sheetConfigs.map((sheet) => (
-            <div key={sheet.index} className="border p-4 mb-4 rounded">
-              <h4 className="font-bold mb-2">{sheet.name}</h4>
-              <div className="mb-2">
-                <label className="block">Columns (e.g., C:J):</label>
-                <input
-                  type="text"
+            <div key={sheet.index} className={styles.sheetConfig}>
+              <h4 className={styles.sheetConfigTitle}>{sheet.name}</h4>
+              <div className={styles.inputGroup}>
+                <Input
+                  label="Columns (e.g., C:J)"
                   value={sheet.columns}
                   onChange={(e) =>
                     setSheetConfigs((prev) =>
@@ -198,76 +251,84 @@ export default function UploadZone() {
                       )
                     )
                   }
-                  className="border p-2 w-full"
+                  placeholder="C:J"
                 />
               </div>
               {sheet.assets.map((asset, idx) => (
-                <div key={idx} className="mb-2">
-                  <h5>Asset {idx + 1}</h5>
-                  <input
-                    type="number"
-                    value={asset.start}
-                    onChange={(e) =>
-                      setSheetConfigs((prev) =>
-                        prev.map((s) => {
-                          if (s.index === sheet.index) {
-                            const updatedAssets = [...s.assets];
-                            updatedAssets[idx].start = Number(e.target.value);
-                            return { ...s, assets: updatedAssets };
-                          }
-                          return s;
-                        })
-                      )
-                    }
-                    className="border p-1 mr-2"
-                    placeholder="Start row"
-                  />
-                  <input
-                    type="number"
-                    value={asset.end}
-                    onChange={(e) =>
-                      setSheetConfigs((prev) =>
-                        prev.map((s) => {
-                          if (s.index === sheet.index) {
-                            const updatedAssets = [...s.assets];
-                            updatedAssets[idx].end = Number(e.target.value);
-                            return { ...s, assets: updatedAssets };
-                          }
-                          return s;
-                        })
-                      )
-                    }
-                    className="border p-1"
-                    placeholder="End row"
-                  />
+                <div key={idx} className={styles.assetGroup}>
+                  <h5 className={styles.assetTitle}>Asset {idx + 1}</h5>
+                  <div className={styles.assetInputs}>
+                    <Input
+                      type="number"
+                      value={asset.start}
+                      onChange={(e) =>
+                        setSheetConfigs((prev) =>
+                          prev.map((s) => {
+                            if (s.index === sheet.index) {
+                              const updatedAssets = [...s.assets];
+                              updatedAssets[idx].start = Number(e.target.value);
+                              return { ...s, assets: updatedAssets };
+                            }
+                            return s;
+                          })
+                        )
+                      }
+                      placeholder="Start row"
+                      size="small"
+                    />
+                    <Input
+                      type="number"
+                      value={asset.end}
+                      onChange={(e) =>
+                        setSheetConfigs((prev) =>
+                          prev.map((s) => {
+                            if (s.index === sheet.index) {
+                              const updatedAssets = [...s.assets];
+                              updatedAssets[idx].end = Number(e.target.value);
+                              return { ...s, assets: updatedAssets };
+                            }
+                            return s;
+                          })
+                        )
+                      }
+                      placeholder="End row"
+                      size="small"
+                    />
+                  </div>
                 </div>
               ))}
             </div>
           ))}
 
-          <button
+          <Button
+            variant="success"
             onClick={() => handleProcess(sheetConfigs)}
-            className="mt-4 bg-green-500 text-white px-4 py-2 rounded"
+            loading={loading}
           >
             Process
-          </button>
+          </Button>
         </div>
       )}
 
       {/* STEP 4: Preview */}
-      {step === 4 && <ImagePreview imageUrls={images} />}
+      {step === 4 && (
+        <ImagePreview 
+          imageUrls={images} 
+          onStartOver={handleStartOver}
+        />
+      )}
 
       {/* ✅ Progress Bar */}
       {loading && (
-        <div className="mt-6">
-          <p className="text-center mb-2">{status}</p>
-          <div className="w-full bg-gray-200 rounded-full h-4">
+        <div className={styles.progressContainer}>
+          <p className={styles.progressStatus}>{status}</p>
+          <div className={styles.progressBar}>
             <div
-              className="bg-blue-500 h-4 rounded-full transition-all duration-300"
+              className={styles.progressFill}
               style={{ width: `${progress}%` }}
             ></div>
           </div>
-          <p className="text-center mt-1">{progress}%</p>
+          <p className={styles.progressText}>{progress}%</p>
         </div>
       )}
     </div>
