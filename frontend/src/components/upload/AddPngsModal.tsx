@@ -1,40 +1,34 @@
 "use client";
 import React, { useRef } from "react";
 import Button from "../ui/Button";
-import styles from "./StartOverModal.module.css";
+import styles from "./AddPngsModal.module.css";
 
-interface StartOverModalProps {
+interface AddPngsModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onFileSelect: (file: File) => void;
-  title?: string;
-  description?: string;
-  warningText?: string;
+  onFileSelect: (files: File[]) => void;
 }
 
-export default function StartOverModal({ 
-  isOpen, 
-  onClose, 
-  onFileSelect, 
-  title = "Start Over with New File",
-  description = "Upload a new Excel file to replace the current one. This will clear all current configurations and start fresh.",
-  warningText = "This action will replace your current file and all configurations. Make sure you have saved any important work."
-}: StartOverModalProps) {
+export default function AddPngsModal({ isOpen, onClose, onFileSelect }: AddPngsModalProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleFileDrop = (e: React.DragEvent) => {
     e.preventDefault();
-    const file = e.dataTransfer.files[0];
-    if (file && file.type === "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet") {
-      onFileSelect(file);
+    const files = Array.from(e.dataTransfer.files).filter(file => 
+      file.type === "image/png" || file.name.toLowerCase().endsWith('.png')
+    );
+    if (files.length > 0) {
+      onFileSelect(files);
       onClose();
     }
   };
 
   const handleFileInput = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      onFileSelect(file);
+    const files = Array.from(e.target.files || []).filter(file => 
+      file.type === "image/png" || file.name.toLowerCase().endsWith('.png')
+    );
+    if (files.length > 0) {
+      onFileSelect(files);
       onClose();
     }
   };
@@ -50,7 +44,7 @@ export default function StartOverModal({
       <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
         {/* Header */}
         <div className={styles.header}>
-          <h2 className={styles.title}>{title}</h2>
+          <h2 className={styles.title}>Add PNGs</h2>
           <button className={styles.closeButton} onClick={onClose}>
             ✕
           </button>
@@ -59,13 +53,13 @@ export default function StartOverModal({
         {/* Content */}
         <div className={styles.content}>
           <p className={styles.description}>
-            {description}
+            Upload PNG files to add to your existing collection. You can select multiple files at once.
           </p>
 
           <div className={styles.warning}>
-            <span className={styles.warningIcon}>⚠️</span>
+            <span className={styles.warningIcon}>ℹ️</span>
             <p className={styles.warningText}>
-              {warningText}
+              Only PNG files will be accepted. Other file types will be ignored.
             </p>
           </div>
 
@@ -75,14 +69,15 @@ export default function StartOverModal({
             onDrop={handleFileDrop}
             onClick={handleUploadZoneClick}
           >
-            <div className={styles.uploadText}>📄 Drop New Excel File Here</div>
-            <div className={styles.uploadSubtext}>or click to browse files</div>
+            <div className={styles.uploadText}>🖼️ Drop PNG Files Here</div>
+            <div className={styles.uploadSubtext}>or click to browse files (multiple selection allowed)</div>
           </div>
 
           <input
             ref={fileInputRef}
             type="file"
-            accept=".xlsx,.xls"
+            accept=".png"
+            multiple
             onChange={handleFileInput}
             style={{ display: "none" }}
           />

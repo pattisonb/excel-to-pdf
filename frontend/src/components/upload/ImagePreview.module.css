@@ -29,8 +29,62 @@
 
 .previewControls {
   display: flex;
+  gap: 12px;
   align-items: center;
-  gap: 0.75rem;
+}
+
+.addPngsButton {
+  background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+  border: none;
+  border-radius: 0.5rem;
+  padding: 0.5rem 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: white;
+  gap: 6px;
+  box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3);
+}
+
+.addPngsButton:hover {
+  background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(139, 92, 246, 0.4);
+}
+
+.addPngsIcon {
+  font-size: 16px;
+}
+
+.addAssetsButton {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  border: none;
+  border-radius: 0.5rem;
+  padding: 0.5rem 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: white;
+  gap: 6px;
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+}
+
+.addAssetsButton:hover {
+  background: linear-gradient(135deg, #059669 0%, #047857 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(16, 185, 129, 0.4);
+}
+
+.addAssetsIcon {
+  font-size: 16px;
 }
 
 .previewContent {
@@ -108,7 +162,6 @@
   max-width: 100%;
   max-height: 100%;
   object-fit: contain;
-  border-radius: 12px;
   box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
   border: 1px solid #e2e8f0;
 }
@@ -285,6 +338,36 @@
   background: rgba(30, 41, 59, 1);
   border-color: #60a5fa;
   color: #60a5fa;
+}
+
+.dark .addPngsButton {
+  background: linear-gradient(135deg, #6d28d9 0%, #5b21b6 100%);
+  box-shadow: 0 4px 12px rgba(139, 92, 246, 0.4);
+}
+
+.dark .addPngsButton:hover {
+  background: linear-gradient(135deg, #5b21b6 0%, #4c1d95 100%);
+  box-shadow: 0 6px 16px rgba(139, 92, 246, 0.5);
+}
+
+.dark .addAssetsButton {
+  background: linear-gradient(135deg, #047857 0%, #065f46 100%);
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
+}
+
+.dark .addAssetsButton:hover {
+  background: linear-gradient(135deg, #065f46 0%, #064e3b 100%);
+  box-shadow: 0 6px 16px rgba(16, 185, 129, 0.5);
+}
+
+.dark .startOverButton {
+  background: linear-gradient(135deg, #1e40af 0%, #1e3a8a 100%);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+}
+
+.dark .startOverButton:hover {
+  background: linear-gradient(135deg, #1e3a8a 0%, #1e293b 100%);
+  box-shadow: 0 6px 16px rgba(59, 130, 246, 0.5);
 }
 
 /* Dark mode responsive */

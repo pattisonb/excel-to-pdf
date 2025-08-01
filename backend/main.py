@@ -31,19 +31,43 @@ def update_progress(job_id, step, percent):
 
 
 def cleanup_output_directory():
-    """Clean up the output directory by removing old session directories"""
+    """Clean up the output directory by removing old files and temp directories"""
     try:
-        # Remove directories older than 1 hour to prevent accumulation
         import time
         current_time = time.time()
+        cleaned_count = 0
+        
+        print(f"Starting cleanup of output directory: {OUTPUT_BASE}")
+        
+        if not os.path.exists(OUTPUT_BASE):
+            print(f"Output directory {OUTPUT_BASE} does not exist")
+            return
+            
         for item in os.listdir(OUTPUT_BASE):
             item_path = os.path.join(OUTPUT_BASE, item)
-            if os.path.isdir(item_path):
-                # Check if directory is older than 1 hour
-                if current_time - os.path.getctime(item_path) > 3600:  # 1 hour
+            
+            # Remove old PNG files (older than 10 minutes)
+            if item.endswith('.png'):
+                age_seconds = current_time - os.path.getctime(item_path)
+                if age_seconds > 0:  # 10 minutes
+                    print(f"Removing old PNG: {item} (age: {age_seconds:.1f} seconds)")
+                    os.remove(item_path)
+                    cleaned_count += 1
+            
+            # Remove temp directories (older than 5 minutes)
+            elif os.path.isdir(item_path) and item.startswith('temp_'):
+                age_seconds = current_time - os.path.getctime(item_path)
+                if age_seconds > 0:  # 5 minutes
+                    print(f"Removing temp directory: {item} (age: {age_seconds:.1f} seconds)")
                     shutil.rmtree(item_path, ignore_errors=True)
+                    cleaned_count += 1
+        
+        print(f"Cleanup completed. Removed {cleaned_count} items.")
+        
     except Exception as e:
         print(f"Error cleaning up output directory: {e}")
+        import traceback
+        traceback.print_exc()
 
 
 def delete_rows_and_columns(ws, ranges, cols_to_delete):
@@ -172,10 +196,22 @@ async def run_processing_job(job_id, input_path, parsed_config, session_dir):
     png_urls = []
     all_files = sorted([f for f in os.listdir(session_dir) if f.endswith(".png")])
     for idx, f in enumerate(all_files):
-        crop_image(os.path.join(session_dir, f), os.path.join(session_dir, f))
+        # Create unique filename for output folder
+        unique_filename = f"{job_id}_{f}"
+        output_path = os.path.join(OUTPUT_BASE, unique_filename)
+        
+        # Crop and save directly to outputs folder
+        crop_image(os.path.join(session_dir, f), output_path)
         update_progress(job_id, "Cropping images", 60 + int((idx + 1) / len(all_files) * 35))
         await asyncio.sleep(0.1)
-        png_urls.append(f"/files/{job_id}/{f}")
+        png_urls.append(f"/files/{unique_filename}")
+
+    # Clean up the temporary session directory
+    try:
+        shutil.rmtree(session_dir, ignore_errors=True)
+        print(f"Cleaned up temporary session directory: {session_dir}")
+    except Exception as e:
+        print(f"Error cleaning up session directory: {e}")
 
     update_progress(job_id, "Done", 100)
     progress_map[job_id]["images"] = png_urls
@@ -223,6 +259,146 @@ async def process_excel(
     background_tasks.add_task(run_processing_job, job_id, input_path, parsed_config, session_dir)
 
     return JSONResponse({"job_id": job_id})
+
+
+@app.post("/add-assets/")
+async def add_assets(
+    file: UploadFile,
+    config: str = Form(...),  # Full JSON config for sheets/assets/columns
+    existing_job_id: str = Form(...),  # Job ID of existing session
+    background_tasks: BackgroundTasks = None
+):
+    """Add assets to an existing session"""
+    
+    # Verify the existing job exists
+    if existing_job_id not in progress_map:
+        return JSONResponse({"error": "Existing session not found"}, status_code=404)
+    
+    # Create a temporary session directory for processing
+    session_dir = os.path.join(OUTPUT_BASE, f"temp_{existing_job_id}")
+    os.makedirs(session_dir, exist_ok=True)
+    
+    parsed_config = json.loads(config)
+    
+    # Create a temporary file for the new upload
+    input_path = os.path.join(f"additional_{file.filename}")
+    with open(input_path, "wb") as buffer:
+        shutil.copyfileobj(file.file, buffer)
+
+    # Run the processing job in the background, but append to existing images
+    background_tasks.add_task(run_processing_job_add_assets, existing_job_id, input_path, parsed_config, session_dir)
+
+    return JSONResponse({"job_id": existing_job_id})
+
+
+async def run_processing_job_add_assets(job_id, input_path, parsed_config, session_dir):
+    """Process additional assets and append to existing ones"""
+    update_progress(job_id, "Processing additional assets", 5)
+    wb = load_workbook(input_path)
+
+    sheets_data = parsed_config["sheets"]
+
+    # Keep only selected sheets
+    selected_indices = [s["index"] for s in sheets_data]
+    all_sheetnames = wb.sheetnames
+
+    for idx, name in enumerate(all_sheetnames, start=1):
+        if idx not in selected_indices:
+            ws_to_remove = wb[name]
+            wb.remove(ws_to_remove)
+
+    for i, sheet_conf in enumerate(sheets_data):
+        ws = wb.worksheets[sheet_conf["index"] - 1]
+        ranges = [(a["start"], a["end"]) for a in sheet_conf["assets"]]
+        columns_range = sheet_conf["columns"]
+        process_sheet(ws, ranges, columns_range)
+        update_progress(job_id, f"Processing additional sheet {sheet_conf['index']}", 10 + int((i + 1) / len(sheets_data) * 20))
+        await asyncio.sleep(0.1)
+
+    modified_excel = os.path.join(session_dir, "additional_processed.xlsx")
+    wb.save(modified_excel)
+
+    update_progress(job_id, "Converting additions to PDF", 40)
+    subprocess.run(f'soffice --headless --convert-to pdf "{modified_excel}" --outdir "{session_dir}"', shell=True, check=True)
+    await asyncio.sleep(0.1)
+
+    update_progress(job_id, "Converting additions to PNG", 60)
+    subprocess.run(f'pdftoppm -png -rx 300 -ry 300 "{os.path.join(session_dir,"additional_processed.pdf")}" "{os.path.join(session_dir,"additional_page")}"', shell=True, check=True)
+
+    # Get existing images
+    existing_images_temp = sorted([f for f in os.listdir("outputs") if f.endswith(".png")])
+    existing_images = []
+    for url in existing_images_temp:
+        existing_images.append(f"/files/{url}")
+    # Process new images
+    new_png_urls = []
+    all_files = sorted([f for f in os.listdir(session_dir) if f.endswith(".png")])
+    for idx, f in enumerate(all_files):
+        # Create unique filename for output folder
+        unique_filename = f"{job_id}_additional_{f}"
+        output_path = os.path.join(OUTPUT_BASE, unique_filename)
+        
+        # Crop and save directly to outputs folder
+        crop_image(os.path.join(session_dir, f), output_path)
+        update_progress(job_id, "Cropping additional images", 60 + int((idx + 1) / len(all_files) * 35))
+        await asyncio.sleep(0.1)
+        new_png_urls.append(f"/files/{unique_filename}")
+
+    # Clean up the temporary session directory
+    try:
+        shutil.rmtree(session_dir, ignore_errors=True)
+        print(f"Cleaned up temporary session directory: {session_dir}")
+    except Exception as e:
+        print(f"Error cleaning up session directory: {e}")
+
+    # Combine existing and new images
+    all_images = existing_images + new_png_urls
+    
+    update_progress(job_id, "Done", 100)
+    progress_map[job_id]["images"] = all_images
+
+
+@app.post("/add-pngs/")
+async def add_pngs(
+    files: list[UploadFile],
+    existing_job_id: str = Form(...),  # Job ID of existing session
+):
+    """Add PNG files to an existing session"""
+    
+    # Verify the existing job exists
+    if existing_job_id not in progress_map:
+        return JSONResponse({"error": "Existing session not found"}, status_code=404)
+    
+    # Get existing images
+    existing_images = progress_map[existing_job_id].get("images", [])
+    
+    # Process uploaded PNG files
+    new_png_urls = []
+    for i, file in enumerate(files):
+        if file.content_type == "image/png" or file.filename.lower().endswith('.png'):
+            # Create unique filename
+            random_id = str(uuid4())
+            unique_filename = f"{existing_job_id}_{random_id}.png"
+            output_path = os.path.join(OUTPUT_BASE, unique_filename)
+            
+            # Save the PNG file directly
+            with open(output_path, "wb") as buffer:
+                shutil.copyfileobj(file.file, buffer)
+            
+            new_png_urls.append(f"/files/{unique_filename}")
+    
+    # Combine existing and new images
+    all_images = existing_images + new_png_urls
+    
+    # Update progress map
+    progress_map[existing_job_id]["images"] = all_images
+    
+    return JSONResponse({
+        "job_id": existing_job_id,
+        "added_count": len(new_png_urls),
+        "total_images": len(all_images),
+        "images": all_images
+    })
 
 
 @app.post("/inspect-excel/")

@@ -1,17 +1,22 @@
 "use client";
 import React, { useState, useEffect } from "react";
 import StartOverModal from "./StartOverModal";
+import AddPngsModal from "./AddPngsModal";
 import { useDarkMode } from "@/contexts/DarkModeContext";
 import styles from "./ImagePreview.module.css";
 
 interface ImagePreviewProps {
   imageUrls?: string[];
   onStartOver?: (file: File) => void;
+  onAddAssets?: (file: File) => void;
+  onAddPngs?: (files: File[]) => void;
 }
 
-export default function ImagePreview({ imageUrls = [], onStartOver }: ImagePreviewProps) {
+export default function ImagePreview({ imageUrls = [], onStartOver, onAddAssets, onAddPngs }: ImagePreviewProps) {
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [showStartOverModal, setShowStartOverModal] = useState(false);
+  const [showAddAssetsModal, setShowAddAssetsModal] = useState(false);
+  const [showAddPngsModal, setShowAddPngsModal] = useState(false);
 
   // Dark mode context
   const { isDark } = useDarkMode();
@@ -26,9 +31,29 @@ export default function ImagePreview({ imageUrls = [], onStartOver }: ImagePrevi
     setShowStartOverModal(true);
   };
 
+  const handleAddAssets = () => {
+    setShowAddAssetsModal(true);
+  };
+
+  const handleAddPngs = () => {
+    setShowAddPngsModal(true);
+  };
+
   const handleFileSelect = (file: File) => {
     if (onStartOver) {
       onStartOver(file);
+    }
+  };
+
+  const handleAddAssetsFileSelect = (file: File) => {
+    if (onAddAssets) {
+      onAddAssets(file);
+    }
+  };
+
+  const handleAddPngsFileSelect = (files: File[]) => {
+    if (onAddPngs) {
+      onAddPngs(files);
     }
   };
 
@@ -43,9 +68,17 @@ export default function ImagePreview({ imageUrls = [], onStartOver }: ImagePrevi
         {/* Preview Header */}
         <div className={styles.previewHeader}>
           <h3 className={styles.previewTitle}>
-          🖼️ PNG Preview ({imageUrls.length} assets)
+            📄 PDF Preview ({imageUrls.length} pages)
           </h3>
           <div className={styles.previewControls}>
+            <button className={styles.addPngsButton} onClick={handleAddPngs}>
+              <span className={styles.addPngsIcon}>🖼️</span>
+              Add PNGs
+            </button>
+            <button className={styles.addAssetsButton} onClick={handleAddAssets}>
+              <span className={styles.addAssetsIcon}>➕</span>
+              Add Assets
+            </button>
             <button className={styles.startOverButton} onClick={handleStartOver}>
               <span className={styles.startOverIcon}>🔄</span>
               Start Over
@@ -86,6 +119,23 @@ export default function ImagePreview({ imageUrls = [], onStartOver }: ImagePrevi
         onClose={() => setShowStartOverModal(false)}
         onFileSelect={handleFileSelect}
       />
+
+      {/* Add Assets Modal */}
+      <StartOverModal
+        isOpen={showAddAssetsModal}
+        onClose={() => setShowAddAssetsModal(false)}
+        onFileSelect={handleAddAssetsFileSelect}
+        title="Add More Assets"
+        description="Upload another Excel file to add more assets to your existing collection."
+        warningText="This will add new assets to your current collection without replacing existing ones."
+      />
+
+              {/* Add PNGs Modal */}
+        <AddPngsModal
+          isOpen={showAddPngsModal}
+          onClose={() => setShowAddPngsModal(false)}
+          onFileSelect={handleAddPngsFileSelect}
+        />
     </>
   );
 }

@@ -37,6 +37,11 @@ export default function UploadZone() {
   const [progress, setProgress] = useState<number>(0);
   const [status, setStatus] = useState<string>("");
 
+  // ✅ NEW: Track add assets mode
+  const [isAddingAssets, setIsAddingAssets] = useState(false);
+  const [addAssetsFile, setAddAssetsFile] = useState<File | null>(null);
+  const [originalJobId, setOriginalJobId] = useState<string | null>(null);
+
   // File input ref for click to browse functionality
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -53,6 +58,9 @@ export default function UploadZone() {
     setUseTestData(false);
     setProgress(0);
     setStatus("");
+    setIsAddingAssets(false);
+    setAddAssetsFile(null);
+    setOriginalJobId(null);
   };
 
   const handleFileDrop = async (droppedFile: File) => {
@@ -91,6 +99,131 @@ export default function UploadZone() {
     await handleFileDrop(newFile);
   };
 
+  const handleAddAssets = async (newFile: File) => {
+    // Start add assets configuration flow
+    setAddAssetsFile(newFile);
+    setIsAddingAssets(true);
+    setLoading(true);
+    setProgress(0);
+    setStatus("Inspecting additional file...");
+
+    const formData = new FormData();
+    formData.append("file", newFile);
+
+    // First inspect the new file
+    const inspectResponse = await fetch("http://localhost:8000/inspect-excel/", {
+      method: "POST",
+      body: formData,
+    });
+
+    const inspectData = await inspectResponse.json();
+    setSheets(inspectData.sheets);
+    setLoading(false);
+    setStep(2); // Go to sheet selection step
+  };
+
+  const handleAddPngs = async (pngFiles: File[]) => {
+    if (!originalJobId) return;
+
+    setLoading(true);
+    setProgress(0);
+    setStatus("Uploading PNG files...");
+
+    const formData = new FormData();
+    formData.append("existing_job_id", originalJobId);
+    
+    // Add each PNG file to the form data
+    pngFiles.forEach((file, index) => {
+      formData.append("files", file);
+    });
+
+    try {
+      const response = await fetch("http://localhost:8000/add-pngs/", {
+        method: "POST",
+        body: formData,
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        
+        // Get the new image URLs from the backend response
+        // The backend returns the complete updated images array
+        const allImageUrls = data.images.map((url: string) => `http://localhost:8000${url}`);
+        console.log("allImageUrls", allImageUrls)
+        setImages(allImageUrls);
+        setLoading(false);
+        setProgress(100);
+        setStatus(`Added ${data.added_count} PNG files`);
+        
+        // Clear status after a few seconds
+        setTimeout(() => {
+          setStatus("");
+          setProgress(0);
+        }, 2000);
+      } else {
+        setLoading(false);
+        setStatus("Error uploading PNG files");
+      }
+    } catch (error) {
+      setLoading(false);
+      setStatus("Error uploading PNG files");
+      console.error("Error uploading PNGs:", error);
+    }
+  };
+
+  const handleProcessAddAssets = async (configSheets: SheetConfig[]) => {
+    if (!addAssetsFile || !originalJobId) return;
+
+    setLoading(true);
+    setProgress(0);
+    setStatus("Processing additional assets...");
+
+    const config = { sheets: configSheets };
+
+    const formData = new FormData();
+    formData.append("file", addAssetsFile);
+    formData.append("config", JSON.stringify(config));
+    formData.append("existing_job_id", originalJobId);
+
+    const response = await fetch("http://localhost:8000/add-assets/", {
+      method: "POST",
+      body: formData,
+    });
+
+    const data = await response.json();
+    const jobId = data.job_id;
+
+    // Monitor progress
+    const ws = new WebSocket(`ws://localhost:8000/progress/${jobId}`);
+    
+    ws.onmessage = (event) => {
+      const progressData = JSON.parse(event.data);
+      setProgress(progressData.percent);
+      setStatus(progressData.step);
+      
+      if (progressData.percent >= 100 && progressData.images) {
+        // The backend now returns all images (existing + new)
+        const urls = progressData.images.map((url: string) => `http://localhost:8000${url}`);
+        console.log("urls", urls)
+        setImages(urls);
+        setLoading(false);
+        setProgress(0);
+        setStatus("");
+        
+        // Reset add assets mode and go back to preview
+        setIsAddingAssets(false);
+        setAddAssetsFile(null);
+        setStep(4);
+        ws.close();
+      }
+    };
+
+    ws.onerror = () => {
+      setLoading(false);
+      setStatus("Error processing additional assets");
+    };
+  };
+
   const toggleSheetSelection = (sheet: SheetInfo) => {
     setSheetConfigs((prev) => {
       const exists = prev.find((s) => s.index === sheet.index);
@@ -124,6 +257,9 @@ export default function UploadZone() {
     });
 
     const { job_id } = await response.json();
+    
+    // Store the job ID for future add assets operations
+    setOriginalJobId(job_id);
 
     const ws = new WebSocket(`ws://localhost:8000/progress/${job_id}`);
     ws.onmessage = (event) => {
@@ -150,8 +286,11 @@ export default function UploadZone() {
         assetCount: sheetData.ranges.length,
         assets: sheetData.ranges.map(([start, end]) => ({ start, end })),
       }));
-
-      handleProcess(hardcodedSheetConfigs);
+      if (isAddingAssets) {
+        handleProcessAddAssets(hardcodedSheetConfigs);
+      } else {
+        handleProcess(hardcodedSheetConfigs);
+      }
     } else {
       setStep(3);
     }
@@ -193,7 +332,9 @@ export default function UploadZone() {
       {/* STEP 2: Select Sheets */}
       {step === 2 && (
         <div className={styles.sheetSelection}>
-          <h3 className={styles.sheetTitle}>Select Sheets:</h3>
+          <h3 className={styles.sheetTitle}>
+            {isAddingAssets ? "Select Sheets to Add:" : "Select Sheets:"}
+          </h3>
           <div className={styles.sheetList}>
             {sheets.map((sheet) => (
               <div key={sheet.index} className={styles.sheetItem}>
@@ -236,7 +377,9 @@ export default function UploadZone() {
       {/* STEP 3: Configure */}
       {step === 3 && (
         <div className={styles.configuration}>
-          <h3 className={styles.configTitle}>Configure Each Sheet:</h3>
+          <h3 className={styles.configTitle}>
+            {isAddingAssets ? "Configure Additional Sheets:" : "Configure Each Sheet:"}
+          </h3>
           {sheetConfigs.map((sheet) => (
             <div key={sheet.index} className={styles.sheetConfig}>
               <h4 className={styles.sheetConfigTitle}>{sheet.name}</h4>
@@ -302,10 +445,10 @@ export default function UploadZone() {
 
           <Button
             variant="success"
-            onClick={() => handleProcess(sheetConfigs)}
+            onClick={() => isAddingAssets ? handleProcessAddAssets(sheetConfigs) : handleProcess(sheetConfigs)}
             loading={loading}
           >
-            Process
+            {isAddingAssets ? "Add Assets" : "Process"}
           </Button>
         </div>
       )}
@@ -315,6 +458,8 @@ export default function UploadZone() {
         <ImagePreview 
           imageUrls={images} 
           onStartOver={handleStartOver}
+          onAddAssets={handleAddAssets}
+          onAddPngs={handleAddPngs}
         />
       )}
 
