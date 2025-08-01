@@ -383,6 +383,8 @@ export default function UploadZone() {
           {sheetConfigs.map((sheet) => (
             <div key={sheet.index} className={styles.sheetConfig}>
               <h4 className={styles.sheetConfigTitle}>{sheet.name}</h4>
+              
+              {/* Columns Configuration */}
               <div className={styles.inputGroup}>
                 <Input
                   label="Columns (e.g., C:J)"
@@ -397,49 +399,105 @@ export default function UploadZone() {
                   placeholder="C:J"
                 />
               </div>
-              {sheet.assets.map((asset, idx) => (
-                <div key={idx} className={styles.assetGroup}>
-                  <h5 className={styles.assetTitle}>Asset {idx + 1}</h5>
-                  <div className={styles.assetInputs}>
-                    <Input
-                      type="number"
-                      value={asset.start}
-                      onChange={(e) =>
-                        setSheetConfigs((prev) =>
-                          prev.map((s) => {
-                            if (s.index === sheet.index) {
-                              const updatedAssets = [...s.assets];
-                              updatedAssets[idx].start = Number(e.target.value);
-                              return { ...s, assets: updatedAssets };
+
+              {/* Asset Count Configuration */}
+              <div className={styles.inputGroup}>
+                <Input
+                  type="number"
+                  label="Number of Assets"
+                  value={sheet.assetCount === 0 ? '' : sheet.assetCount}
+                  onChange={(e) => {
+                    const inputValue = e.target.value;
+                    // Allow empty input for better UX
+                    if (inputValue === '') {
+                      setSheetConfigs((prev) =>
+                        prev.map((s) => {
+                          if (s.index === sheet.index) {
+                            // Show 1 asset form when empty
+                            return { ...s, assetCount: 0, assets: [{ start: 1, end: 10 }] };
+                          }
+                          return s;
+                        })
+                      );
+                    } else {
+                      const newCount = Math.max(1, Math.min(20, parseInt(inputValue) || 1));
+                      setSheetConfigs((prev) =>
+                        prev.map((s) => {
+                          if (s.index === sheet.index) {
+                            // Create or trim assets array based on new count
+                            const newAssets = [];
+                            for (let i = 0; i < newCount; i++) {
+                              if (i < s.assets.length) {
+                                newAssets.push(s.assets[i]);
+                              } else {
+                                newAssets.push({ start: 1, end: 10 });
+                              }
                             }
-                            return s;
-                          })
-                        )
-                      }
-                      placeholder="Start row"
-                      size="small"
-                    />
-                    <Input
-                      type="number"
-                      value={asset.end}
-                      onChange={(e) =>
-                        setSheetConfigs((prev) =>
-                          prev.map((s) => {
-                            if (s.index === sheet.index) {
-                              const updatedAssets = [...s.assets];
-                              updatedAssets[idx].end = Number(e.target.value);
-                              return { ...s, assets: updatedAssets };
-                            }
-                            return s;
-                          })
-                        )
-                      }
-                      placeholder="End row"
-                      size="small"
-                    />
+                            return { ...s, assetCount: newCount, assets: newAssets };
+                          }
+                          return s;
+                        })
+                      );
+                    }
+                  }}
+                  placeholder="1"
+                  helperText="Enter a number between 1 and 20"
+                />
+              </div>
+
+              {/* Dynamic Asset Range Inputs */}
+              <div className={styles.assetsContainer}>
+                <h5 className={styles.assetsTitle}>Asset Ranges:</h5>
+                {sheet.assets.slice(0, sheet.assetCount === 0 ? 1 : sheet.assetCount).map((asset, idx) => (
+                  <div key={idx} className={styles.assetGroup}>
+                    <h6 className={styles.assetTitle}>Asset {idx + 1}</h6>
+                    <div className={styles.assetInputs}>
+                      <Input
+                        type="number"
+                        value={asset.start === 0 ? '' : asset.start}
+                        onChange={(e) => {
+                          const inputValue = e.target.value;
+                          const newValue = inputValue === '' ? 0 : parseInt(inputValue) || 0;
+                          setSheetConfigs((prev) =>
+                            prev.map((s) => {
+                              if (s.index === sheet.index) {
+                                const updatedAssets = [...s.assets];
+                                updatedAssets[idx].start = newValue;
+                                return { ...s, assets: updatedAssets };
+                              }
+                              return s;
+                            })
+                          );
+                        }}
+                        placeholder="Start row"
+                        size="small"
+                        label="Start Row"
+                      />
+                      <Input
+                        type="number"
+                        value={asset.end === 0 ? '' : asset.end}
+                        onChange={(e) => {
+                          const inputValue = e.target.value;
+                          const newValue = inputValue === '' ? 0 : parseInt(inputValue) || 0;
+                          setSheetConfigs((prev) =>
+                            prev.map((s) => {
+                              if (s.index === sheet.index) {
+                                const updatedAssets = [...s.assets];
+                                updatedAssets[idx].end = newValue;
+                                return { ...s, assets: updatedAssets };
+                              }
+                              return s;
+                            })
+                          );
+                        }}
+                        placeholder="End row"
+                        size="small"
+                        label="End Row"
+                      />
+                    </div>
                   </div>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
           ))}
 
@@ -463,17 +521,22 @@ export default function UploadZone() {
         />
       )}
 
-      {/* ✅ Progress Bar */}
+      {/* ✅ Progress Modal */}
       {loading && (
-        <div className={styles.progressContainer}>
-          <p className={styles.progressStatus}>{status}</p>
-          <div className={styles.progressBar}>
-            <div
-              className={styles.progressFill}
-              style={{ width: `${progress}%` }}
-            ></div>
+        <div className={styles.progressOverlay}>
+          <div className={styles.progressModal}>
+            <div className={styles.progressContent}>
+              <h3 className={styles.progressTitle}>Processing...</h3>
+              <p className={styles.progressStatus}>{status}</p>
+              <div className={styles.progressBar}>
+                <div
+                  className={styles.progressFill}
+                  style={{ width: `${progress}%` }}
+                ></div>
+              </div>
+              <p className={styles.progressText}>{progress}%</p>
+            </div>
           </div>
-          <p className={styles.progressText}>{progress}%</p>
         </div>
       )}
     </div>
